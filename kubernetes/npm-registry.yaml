@@ -1,0 +1,149 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: npm-registry
+  namespace: npm-registry
+spec:
+  storageClassName: rook-block
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npm-registry
+  labels:
+    app: npm-registry
+data:
+  config.yaml: |
+    # This is the config file used for the docker images.
+    # It allows all users to do anything, so don't use it on production systems.
+    #
+    # Do not configure host and port under `listen` in this file
+    # as it will be ignored when using docker.
+    # see https://github.com/verdaccio/verdaccio/blob/master/wiki/docker.md#docker-and-custom-port-configuration
+    #
+    # Look here for more config file examples:
+    # https://github.com/verdaccio/verdaccio/tree/master/conf
+    #
+    # path to a directory with all packages
+    storage: /verdaccio/storage/data
+    auth:
+      htpasswd:
+        file: /verdaccio/storage/htpasswd
+        # Maximum amount of users allowed to register, defaults to "+infinity".
+        # You can set this to -1 to disable registration.
+        #max_users: 1000
+        max_users: -1
+    # a list of other known repositories we can talk to
+    uplinks:
+      npmjs:
+        url: https://registry.npmjs.org/
+    packages:
+      '@*/*':
+        # scoped packages
+        access: $all
+        publish: $authenticated
+        proxy: npmjs
+      '**':
+        # allow all users (including non-authenticated users) to read and
+        # publish all packages
+        #
+        # you can specify usernames/groupnames (depending on your auth plugin)
+        # and three keywords: "$all", "$anonymous", "$authenticated"
+        access: $all
+        # allow all known users to publish packages
+        # (anyone can register by default, remember?)
+        publish: $authenticated
+        # if package is not available locally, proxy requests to 'npmjs' registry
+        proxy: npmjs
+    # log settings
+    logs:
+      - {type: stdout, format: pretty, level: http}
+      #- {type: file, path: verdaccio.log, level: info}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: npm-registry
+  namespace: npm-registry
+  # labels:
+  #   app: npm-registry
+spec:
+  # clusterIP: ""
+  ports:
+    - port: 4873
+      targetPort: 4873
+      protocol: TCP
+      # name: ""
+  selector:
+    app: npm-registry
+  type: ClusterIP
+
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  namespace: npm-registry
+  labels:
+    app: npm-registry
+  name: npm-registry
+spec:
+  selector:
+    matchLabels:
+      app: npm-registry
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      # annotations:
+      #   checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        app: npm-registry
+    spec:
+      containers:
+        - name: verdaccio
+          image: verdaccio/verdaccio:2.7.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4873
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4873
+            initialDelaySeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4873
+            initialDelaySeconds: 5
+          resources: {}
+          volumeMounts:
+            - mountPath: /verdaccio/storage
+              name: storage
+              readOnly: false
+            - mountPath: /verdaccio/conf
+              name: config
+              readOnly: true
+      # Allow non-root user to access PersistentVolume
+      securityContext:
+        fsGroup: 1000
+      volumes:
+      - name: config
+        configMap:
+          name: npm-registry
+          # volumes:
+          # #  - name: nothing
+          # #    emptyDir: {}
+      - name: storage
+        persistentVolumeClaim:
+          claimName: npm-registry
+        # emptyDir: {}
+      nodeSelector: {}
