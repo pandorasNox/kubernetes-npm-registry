@@ -1,6 +1,13 @@
 # kubernetes integrated npm-registry based on verdaccio
 
 - written for the [utopia-planitia](https://gitlab.com/utopia-planitia) structure
+- ensure to put this directory on the same level as the utopia-planita kubernetes directory
+e.g.
+    ```
+    /foo
+        /kubernetes
+        /kubernetes-npm-registry
+    ```
 
 ## dependencies
 - rook.io
@@ -11,19 +18,7 @@
 make
 ```
 
-## setup
-- ensure to put this directory on the same level as the utopia-planita kubernetes directory
-e.g.
-    ```
-    /foo
-        /kubernetes
-        /kubernetes-npm-registry
-    ```
-
-- ensure your cluster runs
-
-- then run:
-
+## setup - on the running utopia-planita based cluster
     ```
     make deploy
     ```
@@ -32,6 +27,15 @@ e.g.
 - ignore the make file (maybe a nice insperation)
 - adapt the PersistentVolumeClaim accordingly in [npm-registry.yaml](kubernetes/npm-registry.yaml)
 - use kubectl to deploy
+
+## using the npm-registry during npm installs
+```
+npm set registry npm-registry.npm-registry.svc:4873
+npm install lodash
+
+# alternatively
+npm install lodash --registry npm-registry.npm-registry.svc:4873
+```
 
 ## resources
 - [kubernetes helm verdaccio chart](https://github.com/kubernetes/charts/tree/master/stable/verdaccio)
