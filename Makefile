@@ -10,7 +10,7 @@ system-requirements-check: ##@setup checks system for required dependencies
 deploy: ##@setup deploy to nodes
 	$(CLI) kubectl apply \
 		-f kubernetes/namespace.yaml \
-		-f kubernetes/npm-registry.yaml
+		-f kubernetes
 
 .PHONY: remove
 remove: ##@setup destroy deployment
