@@ -23,7 +23,7 @@ metadata:
 spec:
   # clusterIP: ""
   ports:
-    - port: 4873
+    - port: 80
       targetPort: 4873
       protocol: TCP
       # name: ""

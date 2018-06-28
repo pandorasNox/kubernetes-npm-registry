@@ -30,11 +30,11 @@ make
 
 ## using the npm-registry during npm installs
 ```
-npm set registry npm-registry.npm-registry.svc:4873
+npm set registry http://npm-registry.npm-registry.svc
 npm install lodash
 
 # alternatively
-npm install lodash --registry npm-registry.npm-registry.svc:4873
+npm install lodash --registry http://npm-registry.npm-registry.svc
 ```
 
 ## resources
