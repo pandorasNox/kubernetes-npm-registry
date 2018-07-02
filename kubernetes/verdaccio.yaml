@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: npm-registry
+  namespace: npm-registry
+spec:
+  type: ClusterIP
+  selector:
+    app: npm-registry
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  namespace: npm-registry
+  labels:
+    app: npm-registry
+  name: npm-registry
+spec:
+  selector:
+    matchLabels:
+      app: npm-registry
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: npm-registry
+    spec:
+      containers:
+        - name: verdaccio
+          image: verdaccio/verdaccio:2.7.3
+          ports:
+            - name: http
+              containerPort: 4873
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4873
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4873
+          resources: {}
+          volumeMounts:
+            - mountPath: /verdaccio/storage
+              name: storage
+            - mountPath: /verdaccio/conf
+              name: config
+      securityContext:
+        fsGroup: 1000
+      volumes:
+        - name: config
+          configMap:
+            name: npm-registry
+        - name: storage
+          persistentVolumeClaim:
+            claimName: npm-registry
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: npm-registry
+  namespace: npm-registry
+spec:
+  storageClassName: rook-block
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
