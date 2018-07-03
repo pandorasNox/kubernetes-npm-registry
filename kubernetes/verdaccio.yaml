@@ -47,6 +47,13 @@ spec:
             httpGet:
               path: /
               port: 80
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "100Mi"
+              cpu: "500m"
         - name: verdaccio
           image: verdaccio/verdaccio:2.7.3
           ports:
@@ -64,6 +71,13 @@ spec:
               name: storage
             - mountPath: /verdaccio/conf
               name: config
+          resources:
+            requests:
+              memory: "1000Mi"
+              cpu: "10m"
+            limits:
+              memory: "1000Mi"
+              cpu: "500m"
       securityContext:
         fsGroup: 1000
       volumes:
