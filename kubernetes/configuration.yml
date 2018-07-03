@@ -18,7 +18,12 @@ data:
         max_users: -1
     uplinks:
       npmjs:
-        url: https://registry.npmjs.org/
+        url: http://registry.npmjs.org/
+        timeout: 5s
+        maxage: 1h
+        max_fails: 2
+        fail_timeout: 5m
+        strict_ssl: false
     packages:
       '@*/*':
         access: $all
@@ -31,4 +36,4 @@ data:
     logs:
       - type: stdout
         format: pretty
-        level: http
+        level: warn
