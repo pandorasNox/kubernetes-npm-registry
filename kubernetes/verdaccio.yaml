@@ -49,10 +49,10 @@ spec:
               port: 80
           resources:
             requests:
-              memory: "100Mi"
+              memory: "400Mi"
               cpu: "10m"
             limits:
-              memory: "100Mi"
+              memory: "400Mi"
               cpu: "500m"
         - name: verdaccio
           image: verdaccio/verdaccio:2.7.3
